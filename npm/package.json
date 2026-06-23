@@ -1,0 +1,37 @@
+{
+  "name": "nodule",
+  "version": "0.1.0",
+  "description": "Local MCP server providing a bounce_idea tool for independent LLM-based code critique (BYOM/BYOK)",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/redstone-md/nodule.git"
+  },
+  "homepage": "https://github.com/redstone-md/nodule#readme",
+  "bugs": {
+    "url": "https://github.com/redstone-md/nodule/issues"
+  },
+  "keywords": [
+    "mcp",
+    "model-context-protocol",
+    "llm",
+    "ai",
+    "code-review",
+    "critic",
+    "gemini",
+    "openai",
+    "ollama"
+  ],
+  "bin": {
+    "nodule": "bin/nodule.js"
+  },
+  "scripts": {
+    "postinstall": "node bin/install.js"
+  },
+  "engines": {
+    "node": ">=18"
+  },
+  "files": [
+    "bin/"
+  ]
+}
