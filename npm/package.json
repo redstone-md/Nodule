@@ -1,6 +1,6 @@
 {
   "name": "@redstone-md/nodule",
-  "version": "0.3.0",
+  "version": "0.3.1",
   "description": "Local MCP server providing a bounce_idea tool for independent LLM-based code critique (BYOM/BYOK)",
   "license": "MIT",
   "repository": {
@@ -27,13 +27,14 @@
     "nodule": "bin/nodule.js"
   },
   "scripts": {
-    "postinstall": "node bin/install.js"
+    "postinstall": "node scripts/install.js"
   },
   "engines": {
     "node": ">=18"
   },
   "files": [
-    "bin/"
+    "bin/",
+    "scripts/"
   ],
   "publishConfig": {
     "access": "public"
