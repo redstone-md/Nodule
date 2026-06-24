@@ -78,7 +78,7 @@ func TestBounceIdeaHandler_DefaultFocus(t *testing.T) {
 	})
 
 	lastReq := mock.LastReq()
-	if !strings.Contains(lastReq.SystemPrompt, "алло") {
+	if !strings.Contains(lastReq.SystemPrompt, "alloc") {
 		t.Errorf("Default focus should be performance; system prompt: %s", truncate(lastReq.SystemPrompt, 100))
 	}
 }
@@ -87,8 +87,8 @@ func TestBounceIdeaHandler_DefaultFocus(t *testing.T) {
 // a system prompt with mode-specific directives.
 func TestBounceIdeaHandler_AllFocusModes(t *testing.T) {
 	focusChecks := map[string]string{
-		"performance":  "алло",
-		"architecture": "инкапсуля",
+		"performance":  "alloc",
+		"architecture": "encapsulation",
 		"security":     "injection",
 		"edge_cases":   "race-condition",
 	}

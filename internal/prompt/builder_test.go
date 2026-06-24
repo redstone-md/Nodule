@@ -39,7 +39,7 @@ func TestBuilder_Build_SystemPromptContainsBaseDirective(t *testing.T) {
 
 	for _, focus := range []Focus{FocusPerformance, FocusArchitecture, FocusSecurity, FocusEdgeCases} {
 		pair := b.Build("test-context", "test-solution", focus)
-		if !strings.Contains(pair.SystemPrompt, "деконструировать и сломать") {
+		if !strings.Contains(pair.SystemPrompt, "what will break this solution in production") {
 			t.Errorf("SystemPrompt for %s missing base directive", focus)
 		}
 	}
@@ -52,8 +52,8 @@ func TestBuilder_Build_SystemPromptHasFocusSpecificDirective(t *testing.T) {
 		focus       Focus
 		mustContain string
 	}{
-		{FocusPerformance, "алло"},
-		{FocusArchitecture, "инкапсуля"},
+		{FocusPerformance, "alloc"},
+		{FocusArchitecture, "encapsulation"},
 		{FocusSecurity, "injection"},
 		{FocusEdgeCases, "race-condition"},
 	}
