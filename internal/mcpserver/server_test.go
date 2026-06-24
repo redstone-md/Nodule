@@ -2,6 +2,7 @@ package mcpserver
 
 import (
 	"context"
+	"io"
 	"strings"
 	"testing"
 
@@ -187,4 +188,99 @@ func truncate(s string, max int) string {
 		return s
 	}
 	return s[:max] + "..."
+}
+
+// --- BOM-safe reader tests ---
+
+// fakeCloser wraps a byte slice as an io.ReadCloser.
+type fakeCloser struct {
+	data []byte
+	pos  int
+}
+
+func (f *fakeCloser) Read(p []byte) (int, error) {
+	if f.pos >= len(f.data) {
+		return 0, io.EOF
+	}
+	n := copy(p, f.data[f.pos:])
+	f.pos += n
+	return n, nil
+}
+
+func (f *fakeCloser) Close() error { return nil }
+
+func TestBOMSafeReader_StripsSingleBOM(t *testing.T) {
+	bom := []byte{0xEF, 0xBB, 0xBF}
+	src := &fakeCloser{data: append(bom, []byte(`{"jsonrpc":"2.0","id":1}`)...)}
+	r := newBOMSafeReader(src)
+
+	buf := make([]byte, 1024)
+	n, err := r.Read(buf)
+	if err != nil && err != io.EOF {
+		t.Fatalf("Read error: %v", err)
+	}
+	got := string(buf[:n])
+	if got != `{"jsonrpc":"2.0","id":1}` {
+		t.Errorf("Expected BOM to be stripped, got: %q", got)
+	}
+}
+
+func TestBOMSafeReader_StripsMultipleBOMs(t *testing.T) {
+	bom := []byte{0xEF, 0xBB, 0xBF}
+	// PowerShell StreamWriter prepends BOM on every write — 3 writes = 3 BOMs.
+	src := &fakeCloser{data: append(append(append(bom, bom...), bom...), []byte(`{"jsonrpc":"2.0"}`)...)}
+	r := newBOMSafeReader(src)
+
+	all := []byte{}
+	buf := make([]byte, 16)
+	for {
+		n, err := r.Read(buf)
+		if n > 0 {
+			all = append(all, buf[:n]...)
+		}
+		if err == io.EOF {
+			break
+		}
+		if err != nil {
+			t.Fatalf("Read error: %v", err)
+		}
+	}
+	got := string(all)
+	if got != `{"jsonrpc":"2.0"}` {
+		t.Errorf("Expected all 3 BOMs to be stripped, got: %q", got)
+	}
+}
+
+func TestBOMSafeReader_NoBOMUnchanged(t *testing.T) {
+	src := &fakeCloser{data: []byte(`{"jsonrpc":"2.0","id":1}`)}
+	r := newBOMSafeReader(src)
+
+	buf := make([]byte, 1024)
+	n, err := r.Read(buf)
+	if err != nil && err != io.EOF {
+		t.Fatalf("Read error: %v", err)
+	}
+	got := string(buf[:n])
+	if got != `{"jsonrpc":"2.0","id":1}` {
+		t.Errorf("Expected clean input to pass through, got: %q", got)
+	}
+}
+
+func TestBOMSafeReader_EmptyInput(t *testing.T) {
+	src := &fakeCloser{data: nil}
+	r := newBOMSafeReader(src)
+
+	buf := make([]byte, 1024)
+	n, err := r.Read(buf)
+	if n != 0 || err != io.EOF {
+		t.Errorf("Expected EOF with 0 bytes, got n=%d err=%v", n, err)
+	}
+}
+
+func TestBOMSafeReader_Close(t *testing.T) {
+	src := &fakeCloser{data: []byte(`{}`)}
+	r := newBOMSafeReader(src)
+	if err := r.Close(); err != nil {
+		t.Errorf("Close should not error: %v", err)
+	}
 }
