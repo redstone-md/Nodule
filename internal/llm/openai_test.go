@@ -27,7 +27,7 @@ func TestOpenAIClient_Generate_Success(t *testing.T) {
 		}
 
 		raw, _ := io.ReadAll(r.Body)
-		json.Unmarshal(raw, &receivedBody)
+		_ = json.Unmarshal(raw, &receivedBody)
 
 		resp := openAIChatResponse{
 			Choices: []openAIChoice{
@@ -35,7 +35,7 @@ func TestOpenAIClient_Generate_Success(t *testing.T) {
 			},
 			Model: "test-model",
 		}
-		json.NewEncoder(w).Encode(resp)
+		_ = json.NewEncoder(w).Encode(resp)
 	}))
 	defer server.Close()
 
@@ -86,7 +86,7 @@ func TestOpenAIClient_Generate_NoAPIKey(t *testing.T) {
 		if auth := r.Header.Get("Authorization"); auth != "" {
 			t.Errorf("Authorization should be empty for keyless client, got %q", auth)
 		}
-		json.NewEncoder(w).Encode(openAIChatResponse{
+		_ = json.NewEncoder(w).Encode(openAIChatResponse{
 			Choices: []openAIChoice{
 				{Message: openAIChatMessage{Content: "ok"}},
 			},
@@ -127,7 +127,7 @@ func TestOpenAIClient_Generate_ServerError(t *testing.T) {
 
 func TestOpenAIClient_Generate_EmptyChoices(t *testing.T) {
 	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		json.NewEncoder(w).Encode(openAIChatResponse{Choices: []openAIChoice{}})
+		_ = json.NewEncoder(w).Encode(openAIChatResponse{Choices: []openAIChoice{}})
 	}))
 	defer server.Close()
 

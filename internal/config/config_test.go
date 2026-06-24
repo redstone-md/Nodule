@@ -9,11 +9,13 @@ import (
 func setEnvs(t *testing.T, envs map[string]string) {
 	t.Helper()
 	for k, v := range envs {
-		os.Setenv(k, v)
+		if err := os.Setenv(k, v); err != nil {
+			t.Fatalf("Setenv %s: %v", k, err)
+		}
 	}
 	t.Cleanup(func() {
 		for k := range envs {
-			os.Unsetenv(k)
+			_ = os.Unsetenv(k)
 		}
 	})
 }
