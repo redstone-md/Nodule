@@ -45,8 +45,8 @@ func TestLoad_Defaults(t *testing.T) {
 	if cfg.ServerName != "nodule" {
 		t.Errorf("ServerName = %q, want %q", cfg.ServerName, "nodule")
 	}
-	if cfg.ServerVersion != "0.2.0" {
-		t.Errorf("ServerVersion = %q, want %q", cfg.ServerVersion, "0.2.0")
+	if cfg.ServerVersion != "0.3.0" {
+		t.Errorf("ServerVersion = %q, want %q", cfg.ServerVersion, "0.3.0")
 	}
 }
 
