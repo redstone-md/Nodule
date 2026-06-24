@@ -31,7 +31,7 @@ go install github.com/redstone-md/nodule/cmd/nodule@latest
 ### npm
 
 ```bash
-npx nodule
+npx @redstone-md/nodule
 ```
 
 ### Configuration (Environment Variables)
@@ -53,7 +53,7 @@ npx nodule
 ```bash
 export NODULE_API_KEY="your-gemini-key"
 export NODULE_MODEL_NAME="gemini-2.5-flash"
-nodule
+npx @redstone-md/nodule
 ```
 
 **OpenAI:**
@@ -61,7 +61,7 @@ nodule
 export NODULE_LLM_PROVIDER="openai"
 export NODULE_API_KEY="sk-..."
 export NODULE_MODEL_NAME="gpt-4.1-mini"
-nodule
+npx @redstone-md/nodule
 ```
 
 **Local Ollama (no API key needed):**
@@ -69,7 +69,7 @@ nodule
 export NODULE_LLM_PROVIDER="openai"
 export NODULE_LLM_BASE_URL="http://localhost:11434/v1"
 export NODULE_MODEL_NAME="qwen3:8b"
-nodule
+npx @redstone-md/nodule
 ```
 
 ## MCP Tool: `bounce_idea`
@@ -96,7 +96,7 @@ nodule
   "mcpServers": {
     "nodule": {
       "command": "npx",
-      "args": ["nodule"],
+      "args": ["-y", "@redstone-md/nodule"],
       "env": {
         "NODULE_LLM_PROVIDER": "gemini",
         "NODULE_API_KEY": "your-key",
@@ -114,7 +114,7 @@ nodule
   "mcp.servers": {
     "nodule": {
       "command": "npx",
-      "args": ["-y", "nodule"],
+      "args": ["-y", "@redstone-md/nodule"],
       "env": {
         "NODULE_LLM_PROVIDER": "openai",
         "NODULE_API_KEY": "your-key",

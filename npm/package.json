@@ -1,11 +1,12 @@
 {
-  "name": "nodule",
+  "name": "@redstone-md/nodule",
   "version": "0.1.0",
   "description": "Local MCP server providing a bounce_idea tool for independent LLM-based code critique (BYOM/BYOK)",
   "license": "MIT",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/redstone-md/nodule.git"
+    "url": "git+https://github.com/redstone-md/nodule.git",
+    "directory": "npm"
   },
   "homepage": "https://github.com/redstone-md/nodule#readme",
   "bugs": {
@@ -33,5 +34,8 @@
   },
   "files": [
     "bin/"
-  ]
+  ],
+  "publishConfig": {
+    "access": "public"
+  }
 }
