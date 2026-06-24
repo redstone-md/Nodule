@@ -45,7 +45,7 @@ npx @redstone-md/nodule
 | `NODULE_TEMPERATURE` | `1.2` | Critic temperature (higher = more creative) |
 | `NODULE_MAX_TOKENS` | `4096` | Maximum output tokens |
 | `NODULE_SERVER_NAME` | `nodule` | MCP server name |
-| `NODULE_SERVER_VERSION` | `0.1.0` | MCP server version |
+| `NODULE_SERVER_VERSION` | `0.4.0` | MCP server version |
 
 ### Examples
 
@@ -89,18 +89,57 @@ npx @redstone-md/nodule
 
 ## MCP Client Configuration
 
-### Claude Code (`~/.claude/settings.json`)
+> **For AI agents:** a step-by-step, copy-paste install guide written for an LLM to
+> follow lives in [`docs/INSTALL_FOR_LLM.md`](docs/INSTALL_FOR_LLM.md).
+
+### Claude Code
+
+Fastest — one command (user scope, available in every project):
+
+```bash
+claude mcp add nodule --scope user \
+  -e NODULE_LLM_PROVIDER=gemini \
+  -e NODULE_API_KEY=your-key \
+  -e NODULE_MODEL_NAME=gemini-2.5-flash \
+  -- npx -y @redstone-md/nodule@latest
+```
+
+Verify: `claude mcp list` should show `nodule … ✔ Connected`.
+
+Or edit `~/.claude.json` (top-level `mcpServers`) by hand:
 
 ```json
 {
   "mcpServers": {
     "nodule": {
       "command": "npx",
-      "args": ["-y", "@redstone-md/nodule"],
+      "args": ["-y", "@redstone-md/nodule@latest"],
       "env": {
         "NODULE_LLM_PROVIDER": "gemini",
         "NODULE_API_KEY": "your-key",
         "NODULE_MODEL_NAME": "gemini-2.5-flash"
+      }
+    }
+  }
+}
+```
+
+### OpenCode (`~/.config/opencode/opencode.json`)
+
+OpenCode uses a single `command` array, not `command` + `args`:
+
+```json
+{
+  "mcp": {
+    "nodule": {
+      "type": "local",
+      "command": ["npx", "-y", "@redstone-md/nodule@latest"],
+      "enabled": true,
+      "env": {
+        "NODULE_LLM_PROVIDER": "openai",
+        "NODULE_LLM_BASE_URL": "https://api.openai.com/v1",
+        "NODULE_API_KEY": "sk-...",
+        "NODULE_MODEL_NAME": "gpt-4.1-mini"
       }
     }
   }
@@ -114,7 +153,7 @@ npx @redstone-md/nodule
   "mcp.servers": {
     "nodule": {
       "command": "npx",
-      "args": ["-y", "@redstone-md/nodule"],
+      "args": ["-y", "@redstone-md/nodule@latest"],
       "env": {
         "NODULE_LLM_PROVIDER": "openai",
         "NODULE_API_KEY": "your-key",
@@ -123,6 +162,26 @@ npx @redstone-md/nodule
     }
   }
 }
+```
+
+### First-run note (read this if it "doesn't connect")
+
+`npx` downloads a ~16 MB platform binary on first launch. A cold start can exceed an MCP
+client's startup timeout, and a **stale npx cache** from an older version is the most
+common failure. Pre-warm once in a terminal, then (re)start your client:
+
+```bash
+npm cache clean --force            # only if a previous version misbehaved
+npx -y @redstone-md/nodule@latest  # wait for "nodule: ready", then Ctrl+C
+```
+
+## Skill (Claude Code)
+
+A bundled skill teaches the agent *when* and *how* to call `bounce_idea` well. Install:
+
+```bash
+mkdir -p ~/.claude/skills/nodule
+cp skills/nodule/SKILL.md ~/.claude/skills/nodule/SKILL.md
 ```
 
 ## Development
