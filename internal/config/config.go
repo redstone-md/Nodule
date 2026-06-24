@@ -34,7 +34,7 @@ func Load() (*Config, error) {
 		Temperature:   getEnvFloat("NODULE_TEMPERATURE", 1.2),
 		MaxTokens:     getEnvInt("NODULE_MAX_TOKENS", 4096),
 		ServerName:    getEnv("NODULE_SERVER_NAME", "nodule"),
-		ServerVersion: getEnv("NODULE_SERVER_VERSION", "0.1.0"),
+		ServerVersion: getEnv("NODULE_SERVER_VERSION", "0.2.0"),
 	}
 
 	if err := cfg.validate(); err != nil {

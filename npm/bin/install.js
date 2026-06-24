@@ -1,9 +1,10 @@
 #!/usr/bin/env node
 /**
- * Nodule — postinstall script.
+ * Nodule — postinstall / on-demand binary downloader.
  *
  * Downloads the platform-appropriate Nodule binary from the latest GitHub
- * Release. Falls back to `go install` if download fails.
+ * Release. Supports both async (postinstall) and sync (first-run from nodule.js)
+ * modes. Falls back to `go install` if download fails.
  */
 
 const https = require('https');
@@ -16,33 +17,113 @@ const GITHUB_REPO = 'redstone-md/nodule';
 const BIN_DIR = __dirname;
 
 function getTarget() {
-  const platform = os.platform();
-  const arch = os.arch();
+  var platform = os.platform();
+  var arch = os.arch();
 
-  let goos, goarch, ext = '';
+  var goos, goarch, ext = '';
 
   switch (platform) {
     case 'linux':   goos = 'linux';   break;
     case 'darwin':  goos = 'darwin';  break;
     case 'win32':   goos = 'windows'; ext = '.exe'; break;
-    default:
-      console.warn('nodule: unsupported platform ' + platform + ', skipping download');
-      console.warn('nodule: install manually: go install github.com/redstone-md/nodule/cmd/nodule@latest');
-      return null;
+    default: return null;
   }
 
   switch (arch) {
     case 'x64':     goarch = 'amd64'; break;
     case 'arm64':   goarch = 'arm64'; break;
     case 'ia32':    goarch = '386';   break;
-    default:
-      console.warn('nodule: unsupported arch ' + arch + ', skipping download');
-      return null;
+    default: return null;
   }
 
-  const assetName = 'nodule-' + goos + '-' + goarch + ext;
-  return { goos: goos, goarch: goarch, ext: ext, assetName: assetName };
+  return {
+    goos: goos,
+    goarch: goarch,
+    ext: ext,
+    assetName: 'nodule-' + goos + '-' + goarch + ext
+  };
 }
+
+function getDestPath(target) {
+  return path.join(BIN_DIR, 'nodule-' + target.goos + '-' + target.goarch + target.ext);
+}
+
+/**
+ * Synchronous download — used by nodule.js at first run.
+ * Returns true if binary was installed successfully.
+ */
+function installSync() {
+  var target = getTarget();
+  if (!target) return false;
+
+  var destPath = getDestPath(target);
+  if (fs.existsSync(destPath)) return true;
+
+  process.stderr.write('nodule: downloading binary for ' + target.goos + '/' + target.goarch + '...\n');
+
+  // Fetch latest release URL synchronously via curl or Invoke-WebRequest
+  var curlResult = spawnSync('curl', [
+    '-s', '-L', '-H', 'User-Agent: nodule-installer',
+    'https://api.github.com/repos/' + GITHUB_REPO + '/releases/latest'
+  ], { encoding: 'utf8', timeout: 30000 });
+
+  if (curlResult.status !== 0 || !curlResult.stdout) {
+    tryGoInstall();
+    return fs.existsSync(destPath);
+  }
+
+  var release;
+  try { release = JSON.parse(curlResult.stdout); }
+  catch (e) {
+    tryGoInstall();
+    return fs.existsSync(destPath);
+  }
+
+  var asset = (release.assets || []).find(function(a) { return a.name === target.assetName; });
+  if (!asset) {
+    process.stderr.write('nodule: asset ' + target.assetName + ' not found in ' + release.tag_name + '\n');
+    tryGoInstall();
+    return fs.existsSync(destPath);
+  }
+
+  // Download binary via curl
+  var dlResult = spawnSync('curl', [
+    '-s', '-L', '-o', destPath,
+    '-H', 'User-Agent: nodule-installer',
+    '-H', 'Accept: application/octet-stream',
+    asset.browser_download_url
+  ], { timeout: 60000 });
+
+  if (dlResult.status !== 0) {
+    process.stderr.write('nodule: download failed\n');
+    try { fs.unlinkSync(destPath); } catch (e) {}
+    tryGoInstall();
+    return fs.existsSync(destPath);
+  }
+
+  if (target.goos !== 'windows') {
+    try { fs.chmodSync(destPath, 0o755); } catch (e) {}
+  }
+
+  process.stderr.write('nodule: installed ' + release.tag_name + '\n');
+  return true;
+}
+
+function tryGoInstall() {
+  process.stderr.write('nodule: falling back to go install...\n');
+  var result = spawnSync('go', [
+    'install', 'github.com/' + GITHUB_REPO + '/cmd/nodule@latest'
+  ], { stdio: 'inherit', timeout: 120000 });
+
+  if (result.status !== 0) {
+    process.stderr.write('nodule: go install failed. Install manually:\n');
+    process.stderr.write('  go install github.com/redstone-md/nodule/cmd/nodule@latest\n');
+  } else {
+    process.stderr.write('nodule: installed via go install\n');
+  }
+}
+
+// --- Async mode (postinstall) ---
 
 function fetchLatestReleaseTag() {
   return new Promise(function(resolve, reject) {
@@ -87,10 +168,12 @@ function downloadAsset(url, destPath) {
 
 async function main() {
   var target = getTarget();
-  if (!target) return;
+  if (!target) {
+    process.stderr.write('nodule: unsupported platform, skipping download\n');
+    return;
+  }
 
-  var destPath = path.join(BIN_DIR, 'nodule-' + target.goos + '-' + target.goarch + target.ext);
-
+  var destPath = getDestPath(target);
   if (fs.existsSync(destPath)) {
     console.log('nodule: binary already present, skipping download');
     return;
@@ -114,19 +197,14 @@ async function main() {
     console.log('nodule: installed ' + release.tag_name);
   } catch (err) {
     console.warn('nodule: could not download binary (' + err.message + ')');
-    console.warn('nodule: falling back to go install...');
-
-    var result = spawnSync('go', [
-      'install', 'github.com/' + GITHUB_REPO + '/cmd/nodule@latest'
-    ], { stdio: 'inherit' });
-
-    if (result.status !== 0) {
-      console.warn('nodule: go install failed. Install manually:');
-      console.warn('         go install github.com/redstone-md/nodule/cmd/nodule@latest');
-    } else {
-      console.log('nodule: installed via go install (ensure $GOPATH/bin is in PATH)');
-    }
+    tryGoInstall();
   }
 }
 
-main();
+// Export sync installer for nodule.js, run async on postinstall
+module.exports = { installSync: installSync };
+
+// When run directly (postinstall), execute async download
+if (require.main === module) {
+  main();
+}

@@ -3,18 +3,16 @@
  * Nodule — binary launcher.
  *
  * Runs the platform-specific Nodule MCP server binary with stdio passthrough.
- * This is a thin wrapper: the Go binary handles all MCP protocol logic.
- *
- * All environment variables (NODULE_LLM_PROVIDER, NODULE_API_KEY, etc.)
- * are inherited from the parent process — Nodule is fully BYOM/BYOK.
+ * If the binary is not present (first run, no postinstall), downloads it
+ * synchronously before launching. All environment variables are inherited.
  */
 
-const { spawn } = require('child_process');
+const { spawn, spawnSync } = require('child_process');
 const path = require('path');
 const os = require('os');
 const fs = require('fs');
 
-function getBinaryPath() {
+function getTarget() {
   const platform = os.platform();
   const arch = os.arch();
 
@@ -23,7 +21,7 @@ function getBinaryPath() {
     case 'linux':   goos = 'linux'; break;
     case 'darwin':  goos = 'darwin'; break;
     case 'win32':   goos = 'windows'; ext = '.exe'; break;
-    default: throw new Error(`unsupported platform: ${platform}`);
+    default: return null;
   }
 
   let goarch;
@@ -31,21 +29,53 @@ function getBinaryPath() {
     case 'x64':   goarch = 'amd64'; break;
     case 'arm64': goarch = 'arm64'; break;
     case 'ia32':  goarch = '386'; break;
-    default: throw new Error(`unsupported arch: ${arch}`);
+    default: return null;
   }
 
-  const binaryName = `nodule-${goos}-${goarch}${ext}`;
+  return { goos: goos, goarch: goarch, ext: ext };
+}
+
+function getBinaryPath() {
+  const target = getTarget();
+  if (!target) return null;
+  const binaryName = 'nodule-' + target.goos + '-' + target.goarch + target.ext;
   return path.join(__dirname, binaryName);
 }
 
-function main() {
+function ensureBinary() {
   let binaryPath = getBinaryPath();
-
-  // If the platform binary doesn't exist, try PATH lookup (go install case)
-  if (!fs.existsSync(binaryPath)) {
+  if (!binaryPath) {
+    // Unsupported platform — try PATH lookup
     const isWindows = os.platform() === 'win32';
-    binaryPath = isWindows ? 'nodule.exe' : 'nodule';
+    return isWindows ? 'nodule.exe' : 'nodule';
   }
+
+  // Binary already present
+  if (fs.existsSync(binaryPath)) {
+    return binaryPath;
+  }
+
+  // Binary missing — download synchronously before launching
+  process.stderr.write('nodule: first run, downloading binary...\n');
+  try {
+    var installer = require('./install.js');
+    installer.installSync();
+  } catch (e) {
+    // ignore
+  }
+
+  // Re-check after install attempt
+  if (fs.existsSync(binaryPath)) {
+    return binaryPath;
+  }
+
+  // Final fallback: PATH lookup (go install case)
+  const isWindows = os.platform() === 'win32';
+  return isWindows ? 'nodule.exe' : 'nodule';
+}
+
+function main() {
+  const binaryPath = ensureBinary();
 
   const child = spawn(binaryPath, process.argv.slice(2), {
     stdio: 'inherit',
@@ -55,10 +85,13 @@ function main() {
   child.on('error', (err) => {
     if (err.code === 'ENOENT') {
       process.stderr.write(
-        'nodule: binary not found. Reinstall with `npm install nodule` or `go install github.com/redstone-md/nodule/cmd/nodule@latest`\n'
+        'nodule: binary not found. Install with:\n' +
+        '  npm install @redstone-md/nodule\n' +
+        'or:\n' +
+        '  go install github.com/redstone-md/nodule/cmd/nodule@latest\n'
       );
     } else {
-      process.stderr.write(`nodule: ${err.message}\n`);
+      process.stderr.write('nodule: ' + err.message + '\n');
     }
     process.exit(1);
   });
@@ -67,7 +100,7 @@ function main() {
     if (signal) {
       process.kill(process.pid, signal);
     } else {
-      process.exit(code ?? 1);
+      process.exit(code == null ? 1 : code);
     }
   });
 }
