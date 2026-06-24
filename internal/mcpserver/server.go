@@ -19,7 +19,7 @@ import (
 type BounceIdeaInput struct {
 	Context          string `json:"context"                jsonschema:"Current codebase state, function signatures, benchmarks or error logs. Required."`
 	ProposedSolution string `json:"proposed_solution"       jsonschema:"Draft idea or code the main agent plans to apply. Required."`
-	Focus            string `json:"focus"                   jsonschema:"Critique specialization: performance, architecture, security, edge_cases. Default: performance."`
+	Focus            string `json:"focus,omitempty"         jsonschema:"Critique specialization: performance, architecture, security, edge_cases. Default: performance."`
 }
 
 // Server wraps the MCP server and its dependencies.

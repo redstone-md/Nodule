@@ -1,6 +1,6 @@
 {
   "name": "@redstone-md/nodule",
-  "version": "0.4.0",
+  "version": "0.4.1",
   "description": "Local MCP server providing a bounce_idea tool for independent LLM-based code critique (BYOM/BYOK)",
   "license": "MIT",
   "repository": {

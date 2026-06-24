@@ -45,7 +45,7 @@ npx @redstone-md/nodule
 | `NODULE_TEMPERATURE` | `1.2` | Critic temperature (higher = more creative) |
 | `NODULE_MAX_TOKENS` | `4096` | Maximum output tokens |
 | `NODULE_SERVER_NAME` | `nodule` | MCP server name |
-| `NODULE_SERVER_VERSION` | `0.4.0` | MCP server version |
+| `NODULE_SERVER_VERSION` | `0.4.1` | MCP server version |
 
 ### Examples
 

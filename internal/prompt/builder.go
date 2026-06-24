@@ -86,17 +86,17 @@ func (b *Builder) systemPrompt(focus Focus) string {
 func (b *Builder) userPrompt(context, proposedSolution string, focus Focus) string {
 	var sb strings.Builder
 
-	sb.WriteString("## Контекст кодовой базы\n\n")
+	sb.WriteString("## Codebase context\n\n")
 	sb.WriteString(context)
-	sb.WriteString("\n\n## Предложенное решение\n\n")
+	sb.WriteString("\n\n## Proposed solution\n\n")
 	sb.WriteString(proposedSolution)
-	sb.WriteString("\n\n## Задача\n\n")
+	sb.WriteString("\n\n## Task\n\n")
 	sb.WriteString(formatFocusDirective(focus))
-	sb.WriteString("\n\nСтруктура ответа:\n")
-	sb.WriteString("1. **Критические проблемы** — то, что сломает код в проде\n")
-	sb.WriteString("2. **Скрытые баги** — race conditions, утечки, edge-cases\n")
-	sb.WriteString("3. **Альтернативы** — конкретные out-of-the-box подходы\n")
-	sb.WriteString("4. **Вердикт** — принять / доработать / переписать\n")
+	sb.WriteString("\n\nResponse structure:\n")
+	sb.WriteString("1. **Critical problems** — what will break in production\n")
+	sb.WriteString("2. **Hidden bugs** — race conditions, leaks, edge cases\n")
+	sb.WriteString("3. **Alternatives** — concrete out-of-the-box approaches\n")
+	sb.WriteString("4. **Verdict** — accept / revise / rewrite\n")
 
 	return sb.String()
 }
@@ -104,14 +104,14 @@ func (b *Builder) userPrompt(context, proposedSolution string, focus Focus) stri
 func formatFocusDirective(focus Focus) string {
 	switch focus {
 	case FocusPerformance:
-		return "Деконструируй решение с точки зрения производительности. Найди каждый лишний аллокацию и неоптимальный проход. Сравни асимптотику."
+		return "Deconstruct the solution for performance. Find every needless allocation and suboptimal pass. Compare asymptotics."
 	case FocusArchitecture:
-		return "Деконструируй архитектурное решение. Найди утечки абстракций и нарушения инкапсуляции. Предложи альтернативную декомпозицию."
+		return "Deconstruct the architecture. Find leaky abstractions and encapsulation breaks. Propose an alternative decomposition."
 	case FocusSecurity:
-		return "Деконструируй решение с точки зрения безопасности. Найди каждую возможную атаку и уязвимость."
+		return "Deconstruct the solution for security. Find every possible attack and vulnerability."
 	case FocusEdgeCases:
-		return "Найди каждый возможный edge-case, race condition, deadlock, panic-scenario. Подумай: что если контекст отменят? Что если вход nil/empty/overflow?"
+		return "Find every possible edge case, race condition, deadlock, panic scenario. What if the context is cancelled? What if input is nil/empty/overflow?"
 	default:
-		return "Проведи комплексную критику решения по всем осям: производительность, архитектура, безопасность, edge-cases."
+		return "Run a comprehensive critique across all axes: performance, architecture, security, edge cases."
 	}
 }

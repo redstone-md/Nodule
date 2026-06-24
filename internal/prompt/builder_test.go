@@ -79,11 +79,11 @@ func TestBuilder_Build_UserPromptContainsContext(t *testing.T) {
 	if !strings.Contains(pair.UserPrompt, "my-proposed-fix") {
 		t.Error("UserPrompt must contain the proposed solution")
 	}
-	if !strings.Contains(pair.UserPrompt, "Контекст кодовой базы") {
-		t.Error("UserPrompt must contain section header 'Контекст кодовой базы'")
+	if !strings.Contains(pair.UserPrompt, "Codebase context") {
+		t.Error("UserPrompt must contain section header 'Codebase context'")
 	}
-	if !strings.Contains(pair.UserPrompt, "Предложенное решение") {
-		t.Error("UserPrompt must contain section header 'Предложенное решение'")
+	if !strings.Contains(pair.UserPrompt, "Proposed solution") {
+		t.Error("UserPrompt must contain section header 'Proposed solution'")
 	}
 }
 
@@ -92,10 +92,10 @@ func TestBuilder_Build_UserPromptHasStructure(t *testing.T) {
 	pair := b.Build("c", "s", FocusPerformance)
 
 	requiredSections := []string{
-		"Критические проблемы",
-		"Скрытые баги",
-		"Альтернативы",
-		"Вердикт",
+		"Critical problems",
+		"Hidden bugs",
+		"Alternatives",
+		"Verdict",
 	}
 
 	for _, section := range requiredSections {
@@ -112,9 +112,9 @@ func TestBuilder_Build_FocusDirectivePerMode(t *testing.T) {
 		focus       Focus
 		mustContain string
 	}{
-		{FocusPerformance, "асимптотик"},
-		{FocusArchitecture, "декомпозицию"},
-		{FocusSecurity, "атаку и уязвим"},
+		{FocusPerformance, "asymptotics"},
+		{FocusArchitecture, "decomposition"},
+		{FocusSecurity, "attack and vulnerab"},
 		{FocusEdgeCases, "deadlock"},
 	}
 
